@@ -18,7 +18,9 @@ export const TicketTable = pgTable("ticket", {
     name : varchar().notNull(),
     description : varchar().notNull(),
     images : varchar().array(),
-    userId : integer("user_id").notNull().references(()=>UserTable.id)
+    userId : integer("user_id").notNull().references(()=>UserTable.id, {
+        onDelete : "cascade"
+    })
 })
 
 export const IssuesTable = pgTable("issue", {
@@ -27,7 +29,7 @@ export const IssuesTable = pgTable("issue", {
     ticket : integer().notNull().references(()=>TicketTable.id)
 })
 
-const relations = defineRelations(
+export const relations = defineRelations(
     { UserTable, TicketTable, IssuesTable },
     (r) => ({
         TicketTable: {
