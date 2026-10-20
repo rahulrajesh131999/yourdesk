@@ -29,18 +29,28 @@ export const IssuesTable = pgTable("issue", {
     ticket : integer().notNull().references(()=>TicketTable.id)
 })
 
+export const IssueAgents = pgTable("issueagents",{
+    id : integer().primaryKey().generatedAlwaysAsIdentity(),
+    issue : integer().references(()=>IssuesTable.id),
+    agent : integer().references(()=>UserTable.id)
+})
+
 export const relations = defineRelations(
-    { UserTable, TicketTable, IssuesTable },
+    { UserTable, TicketTable, IssuesTable, IssueAgents },
     (r) => ({
-        TicketTable: {
-            user: r.one.UserTable({
-                from: r.TicketTable.userId,
-                to: r.UserTable.id,
-            }),
+        // User can create many tickets
+        UserTable : {
+            tickets : r.many.TicketTable({
+                from:r.UserTable.id,
+                to : r.TicketTable.userId
+            })
         },
-        IssuesTable : {
-            ticket : r.one.TicketTable({
-                
+
+        // Each ticket belongs to one user and have many issues
+        TicketTable : {
+            user : r.one.UserTable({
+                from : r.TicketTable.userId,
+                to : r.UserTable.id
             })
         }
     })
