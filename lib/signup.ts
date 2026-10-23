@@ -1,9 +1,18 @@
 import {authClient} from "@/lib/auth-client"
 
+
+type UserDetails = {
+    fullName: string;
+  email: string;
+  password: string;
+}
+
+export const credentials =async ({fullName , email, password}: UserDetails /* {fullName:string, email:string, password:string} */)=> {
+
 const {data, error} = await authClient.signUp.email({
-    email : "",
-    password : "",
-    name : "",
+    email : email,
+    password : password,
+    name : fullName,
     image : "",
     callbackURL : "/dashboard"
 },
@@ -18,3 +27,4 @@ const {data, error} = await authClient.signUp.email({
         
     }
 })
+}

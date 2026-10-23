@@ -3,19 +3,53 @@ import React, { useState } from 'react'
 import Image from 'next/image'
 
 import google_logo from "@/public/google-svgrepo-com.svg"
+import {credentials} from "@/lib/signup"
 
 const page = () => {
 
-  const [email, setEmail] = useState("")
+  const [form, setForm] = useState({
+    fullName : "",
+    email : "",
+    password : "",
+    confirmPassword : ""
 
-  const onmove=(e:React.ChangeEvent<HTMLInputElement>)=>{
-    setEmail(e.target.value)
-    console.log(e.target.value)
+  })
+
+  const updateForm = (e:React.ChangeEvent<HTMLInputElement>) => {
+    setForm({
+      ...form,
+      [e.target.name] : e.target.value
+    })
+  }
+
+  const verifyPassword = () =>{
+    const {password, confirmPassword } = form
+
+    if(password != confirmPassword){
+      return "passowrds does not match"
+    }
+
+    if(password.length < 6){
+      return "password length should be greater than 6"
+    }
+
+    return ""
   }
 
 
-  const Handlesubmit = () =>{
+  const Handlesubmit = (e : React.SubmitEvent) =>{
     
+    e.preventDefault();
+
+    const error = verifyPassword()
+
+    if(error){
+      return "password Error"
+    }else{
+      credentials({fullName:form.fullName, email:form.email, password:form.password})
+      console.log("credentials passed successfully") 
+      return
+    }
   }
 
   return (
@@ -33,8 +67,28 @@ const page = () => {
       <form onSubmit={Handlesubmit} className='flex flex-col items-center gap-2.5 w-full'>
         <input type="text" placeholder='Enter your email...' 
         name='email'
-        value={email}
-        onChange={onmove}
+        value={form.fullName}
+        onChange={updateForm}
+        className='border-white border rounded-sm py-1.5 pl-2 pr-14 focus:outline-none'/>
+        <input type="text" placeholder='Enter your email...' 
+        name='email'
+        value={form.email}
+        onChange={updateForm}
+        className='border-white border rounded-sm py-1.5 pl-2 pr-14 focus:outline-none'/>
+        <input type="text" placeholder='Enter your email...' 
+        name='email'
+        value={form.password}
+        onChange={updateForm}
+        className='border-white border rounded-sm py-1.5 pl-2 pr-14 focus:outline-none'/>
+        <input type="text" placeholder='Enter your email...' 
+        name='email'
+        value={form.confirmPassword}
+        onChange={updateForm}
+        className='border-white border rounded-sm py-1.5 pl-2 pr-14 focus:outline-none'/>
+        <input type="text" placeholder='Enter your email...' 
+        name='email'
+        value={form.email}
+        onChange={updateForm}
         className='border-white border rounded-sm py-1.5 pl-2 pr-14 focus:outline-none'/>
         <button className='rounded-md px-1 py-1.5 cursor-pointer w-[20%] bg-white text-black' type='submit'>Continue</button>
       </form>
