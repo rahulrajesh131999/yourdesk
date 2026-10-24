@@ -4,6 +4,8 @@ import Image from 'next/image'
 
 import google_logo from "@/public/google-svgrepo-com.svg"
 import {credentials} from "@/lib/signup"
+import { router } from 'better-auth/api'
+import { useRouter } from 'next/navigation'
 
 const page = () => {
 
@@ -15,11 +17,16 @@ const page = () => {
 
   })
 
+  const router = useRouter()
+
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+
   const updateForm = (e:React.ChangeEvent<HTMLInputElement>) => {
-    setForm({
-      ...form,
+    setForm((prev)=>({
+      ...prev,
       [e.target.name] : e.target.value
-    })
+    }))
   }
 
   const verifyPassword = () =>{
@@ -37,19 +44,36 @@ const page = () => {
   }
 
 
-  const Handlesubmit = (e : React.SubmitEvent) =>{
+  const Handlesubmit = async (e : React.SubmitEvent) =>{
     
     e.preventDefault();
 
-    const error = verifyPassword()
+    const validationError = verifyPassword()
 
-    if(error){
-      return "password Error"
-    }else{
-      credentials({fullName:form.fullName, email:form.email, password:form.password})
-      console.log("credentials passed successfully") 
-      return
+    if(validationError){
+      return validationError
     }
+
+    setLoading(true)
+
+    try {
+      const {data, error} = await credentials({fullName:form.fullName, email: form.email, password: form.password})
+
+      if(error){
+        setError(error.message || "Signup failed")
+        router.refresh()
+      }
+
+      if(data){
+        router.push("/dashboard")
+        router.refresh()
+      }
+    } catch (error) {
+     setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+
   }
 
   return (
