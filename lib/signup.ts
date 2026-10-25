@@ -5,6 +5,7 @@ type UserDetails = {
     fullName: string;
   email: string;
   password: string;
+  role?: string
 }
 
 export const credentials =async ({fullName , email, password}: UserDetails /* {fullName:string, email:string, password:string} */)=> {

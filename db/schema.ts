@@ -5,21 +5,61 @@ import {
   pgTable,
   varchar,
   pgEnum,
-  unique
+  unique,
+  timestamp
 } from "drizzle-orm/pg-core";
 import { defineRelations } from "drizzle-orm";
 
-export const userRoles = pgEnum("user_role", ["admin", "agent", "customer"]);
+export const organizationRoles = pgEnum("user_role", ["admin", "agent", "customer"]);
+export const ticketStatus = pgEnum("ticket_status", ["open", "pending", "resolved", "closed"])
+export const ticketPriority = pgEnum("ticket_priority", ["low", "medium", "high", "urgent"])
 
 export const UserTable = pgTable("users", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar().notNull(),
   email: varchar().notNull().unique(),
-  password: varchar().notNull(),
+  password: varchar(),
   googleId: varchar().unique(),
-
-  role: userRoles().notNull().default("customer"),
+  emailVerified : boolean(),
+  createdAt: timestamp("created_at")
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow(),
 });
+
+export const OrganizationTable = pgTable("organization",{
+  id : integer().primaryKey().generatedAlwaysAsIdentity(),
+  name : varchar().notNull(),
+  slug : varchar().notNull().unique(),
+  createdBy : integer("user_id").notNull().references(()=>UserTable.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  
+})
+
+export const OrganizationMembersTable = pgTable("organization_members",{
+  id : integer().primaryKey().generatedAlwaysAsIdentity(),
+  organizationId : integer("organization_id").notNull().references(()=>OrganizationTable.id,{
+    onDelete : "cascade"
+  }),
+
+  userId : integer("user_id").notNull().references(()=>UserTable.id,{
+    onDelete : "cascade"
+  }),
+  role : organizationRoles().notNull().default("agent"),
+  joinedAt: timestamp("joined_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  
+},
+(table)=> [
+  unique("organization_user_unique").on(
+    table.organizationId,
+    table.userId
+  )
+])
 
 export const TicketTable = pgTable("ticket", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
@@ -31,6 +71,14 @@ export const TicketTable = pgTable("ticket", {
     .references(() => UserTable.id, {
       onDelete: "cascade",
     }),
+
+  createdAt: timestamp("created_at")
+    .notNull()
+    .defaultNow(),
+
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow(),
 });
 
 export const IssuesTable = pgTable("issue", {
@@ -39,6 +87,14 @@ export const IssuesTable = pgTable("issue", {
   ticket: integer()
     .notNull()
     .references(() => TicketTable.id),
+
+  createdAt: timestamp("created_at")
+    .notNull()
+    .defaultNow(),
+
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow(),
 });
 
 export const IssueAgents = pgTable("issueagents", {
@@ -48,7 +104,16 @@ export const IssueAgents = pgTable("issueagents", {
   }),
   agent: integer().references(() => UserTable.id,{
     onDelete : "cascade"
-  })
+  }),
+
+  createdAt: timestamp("created_at")
+    .notNull()
+    .defaultNow(),
+
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow(),
+  
 },
 (table) => [
     // prevent assigning the same agent to the same issue twice
