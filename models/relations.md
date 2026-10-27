@@ -201,3 +201,69 @@ export const IssueAgents = pgTable(
 Remember to import `unique` from `drizzle-orm/pg-core` if you use this improvement.
 
 My recommendation: use `UserTable → TicketTable → IssuesTable → IssueAgents` as your primary relation chain. It makes it easy to fetch a ticket with its customer, issues, and assigned agents, and to fetch an agent's assigned issues without maintaining duplicate agent IDs.
+
+
+
+# Something new
+
+```
+
+OrganizationTable: {
+  organizationMember: r.many.OrganizationMembersTable({
+    from: r.OrganizationTable.id,
+    to: r.OrganizationMembersTable.organizationId,
+  }),
+
+  organizationTicket: r.many.TicketTable({
+    from: r.OrganizationTable.id,
+    to: r.TicketTable.organizationId,
+  }),
+},
+
+OrganizationMembersTable: {
+  user: r.one.UserTable({
+    from: r.OrganizationMembersTable.userId,
+    to: r.UserTable.id,
+  }),
+
+  organization: r.one.OrganizationTable({
+    from: r.OrganizationMembersTable.organizationId,
+    to: r.OrganizationTable.id,
+  }),
+
+  ticketAssignment: r.many.TicketAssignmentTables({
+    from: r.OrganizationMembersTable.id,
+    to: r.TicketAssignmentTables.memberId,
+  }),
+},
+
+TicketAssignmentTables: {
+  ticket: r.one.TicketTable({
+    from: r.TicketAssignmentTables.ticketId,
+    to: r.TicketTable.id,
+  }),
+
+  member: r.one.OrganizationMembersTable({
+    from: r.TicketAssignmentTables.memberId,
+    to: r.OrganizationMembersTable.id,
+  }),
+},
+
+```
+
+
+```
+
+// Inside UserTable
+createdOrganizations: r.many.OrganizationTable({
+  from: r.UserTable.id,
+  to: r.OrganizationTable.createdBy,
+}),
+
+// Inside OrganizationTable
+creator: r.one.UserTable({
+  from: r.OrganizationTable.createdBy,
+  to: r.UserTable.id,
+}),
+
+```
