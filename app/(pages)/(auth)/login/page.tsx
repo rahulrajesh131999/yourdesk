@@ -1,3 +1,4 @@
+"use client"
 import React from 'react'
 import Image from 'next/image'
 import { useForm, SubmitHandler } from "react-hook-form"
@@ -53,7 +54,7 @@ const page = () => {
       <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col items-center gap-2.5 w-full'>
         <div>
         <input
-        {...register("email"), {required : true}}
+        {...register("email", {required : true})}
          type="text" placeholder='Enter your email...' 
                 className='border-white border rounded-sm py-1.5 pl-2 pr-14 focus:outline-none'/>
         {
@@ -62,7 +63,7 @@ const page = () => {
         </div>
         <div>
         <input
-        {...register("password"), {required : true}}
+        {...register("password", {required : true})}
          type="text" placeholder='Enter your email...' 
                 className='border-white border rounded-sm py-1.5 pl-2 pr-14 focus:outline-none'/>
         {
