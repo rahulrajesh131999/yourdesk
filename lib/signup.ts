@@ -15,7 +15,7 @@ const {data, error} = await authClient.signUp.email({
     password : password,
     name : fullName,
     image : "",
-    callbackURL : "/dashboard"
+    callbackURL : "/dashboard",
 },
 /* {
     onRequest : (ctx) =>{

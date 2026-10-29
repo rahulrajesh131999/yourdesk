@@ -35,24 +35,87 @@ export const agentStatus = pgEnum("agentStatus", [
   "offline",
 ]);
 
-export const UserTable = pgTable("users", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+export const UserTable = pgTable("user", {
+  id: text("id").primaryKey(),
   name: varchar().notNull(),
   email: varchar().notNull().unique(),
   password: varchar(),
   googleId: varchar().unique(),
   emailVerified: boolean(),
+  image: text("image"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+export const session = pgTable(
+  "session",
+  {
+    id: text("id").primaryKey(),
+    expiresAt: timestamp("expires_at").notNull(),
+    token: text("token").notNull().unique(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    userId: text("user_id")
+      .notNull()
+      .references(() => UserTable.id, { onDelete: "cascade" }),
+    impersonatedBy: text("impersonated_by"),
+  },
+  (table) => [index("session_userId_idx").on(table.userId)],
+);
+
+export const account = pgTable(
+  "account",
+  {
+    id: text("id").primaryKey(),
+    accountId: text("account_id").notNull(),
+    providerId: text("provider_id").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => UserTable.id, { onDelete: "cascade" }),
+    accessToken: text("access_token"),
+    refreshToken: text("refresh_token"),
+    idToken: text("id_token"),
+    accessTokenExpiresAt: timestamp("access_token_expires_at"),
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+    scope: text("scope"),
+    password: text("password"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [index("account_userId_idx").on(table.userId)],
+);
+
+export const verification = pgTable(
+  "verification",
+  {
+    id: text("id").primaryKey(),
+    identifier: text("identifier").notNull(),
+    value: text("value").notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [index("verification_identifier_idx").on(table.identifier)],
+);
 
 export const OrganizationTable = pgTable("organization", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar().notNull(),
   slug: varchar().notNull().unique(),
-  createdBy: integer("user_id")
+  createdBy: text("created_by")
     .notNull()
-    .references(() => UserTable.id),
+    .references(() => UserTable.id,{
+      onDelete:"cascade"
+    }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -67,12 +130,12 @@ export const OrganizationMembersTable = pgTable(
         onDelete: "cascade",
       }),
 
-    userId: integer("user_id")
+    userId: text("user_id")
       .notNull()
       .references(() => UserTable.id, {
         onDelete: "cascade",
       }),
-    agentAvailable: agentStatus().notNull().default("open"),
+    agentAvailable: agentStatus("agent_status").notNull().default("offline"),
     role: organizationRoles().notNull().default("agent"),
     joinedAt: timestamp("joined_at").notNull().defaultNow(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -80,6 +143,7 @@ export const OrganizationMembersTable = pgTable(
   },
   (table) => [
     unique("organization_user_unique").on(table.organizationId, table.userId),
+    index("org_members_user_idx").on(table.userId)
   ],
 );
 
@@ -87,14 +151,13 @@ export const TicketTable = pgTable("ticket", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar().notNull(),
   description: text().notNull(),
-  images: varchar().array(),
-  userId: integer("user_id")
+  userId: text("user_id")
     .notNull()
     .references(() => UserTable.id, {
       onDelete: "cascade",
     }),
 
-  organizationId: integer()
+  organizationId: integer("organization_id")
     .notNull()
     .references(() => OrganizationTable.id, {
       onDelete: "cascade",
@@ -103,7 +166,10 @@ export const TicketTable = pgTable("ticket", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+},
+(table)=>[
+  index("ticket_user_idx").on(table.userId),
+]);
 
 export const TicketAssignmentTables = pgTable(
   "ticket_assignments",
@@ -111,7 +177,9 @@ export const TicketAssignmentTables = pgTable(
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     ticketId: integer("ticket_id")
       .notNull()
-      .references(() => TicketTable.id),
+      .references(() => TicketTable.id,{
+        onDelete : "cascade"
+      }),
     memberId: integer("member_id")
       .notNull()
       .references(() => OrganizationMembersTable.id, {
@@ -133,6 +201,9 @@ export const relations = defineRelations(
     OrganizationMembersTable,
     TicketAssignmentTables,
     TicketTable,
+    session,
+    account,
+    verification
   },
   (r) => ({
     // User can create many tickets
@@ -151,6 +222,27 @@ export const relations = defineRelations(
         from: r.UserTable.id,
         to: r.OrganizationTable.createdBy,
       }),
+      userSession : r.many.session({
+        from : r.UserTable.id,
+        to : r.session.userId
+      }),
+      userAccount : r.many.account({
+        from : r.UserTable.id,
+        to : r.account.userId
+      })
+    },
+
+    session : {
+      user : r.one.UserTable({
+        from : r.session.userId,
+        to : r.UserTable.id
+      })
+    },
+    account : {
+      user : r.one.UserTable({
+        from : r.account.userId,
+        to : r.UserTable.id
+      })
     },
 
     // Each ticket belongs to one user each ticket belongs to one ticketassignmenttable
@@ -159,6 +251,10 @@ export const relations = defineRelations(
         from: r.TicketTable.userId,
         to: r.UserTable.id,
       }),
+      organization: r.one.OrganizationTable({
+        from: r.TicketTable.organizationId,
+        to: r.OrganizationTable.id,
+      }),
       ticketAssigned: r.many.TicketAssignmentTables({
         from: r.TicketTable.id,
         to: r.TicketAssignmentTables.ticketId,
@@ -166,7 +262,7 @@ export const relations = defineRelations(
     },
 
     OrganizationTable: {
-      organizationMember: r.one.OrganizationMembersTable({
+      organizationMember: r.many.OrganizationMembersTable({
         from: r.OrganizationTable.id,
         to: r.OrganizationMembersTable.organizationId,
       }),
@@ -185,7 +281,7 @@ export const relations = defineRelations(
         from: r.OrganizationMembersTable.userId,
         to: r.UserTable.id,
       }),
-      organization: r.many.OrganizationTable({
+      organization: r.one.OrganizationTable({
         from: r.OrganizationMembersTable.organizationId,
         to: r.OrganizationTable.id,
       }),

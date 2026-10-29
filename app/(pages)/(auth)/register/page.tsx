@@ -81,9 +81,8 @@ const page = () => {
 
     const data = await authClient.signIn.social({
       provider : "google",
+      callbackURL : "/dashboard"
     })
-
-    console.log(data)
 
   }
 
