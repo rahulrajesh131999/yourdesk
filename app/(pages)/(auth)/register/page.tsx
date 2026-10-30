@@ -99,8 +99,8 @@ const page = () => {
         <div className='border w-28 border-gray-800'></div>
       </div>
       <form onSubmit={Handlesubmit} className='flex flex-col items-center gap-2.5 w-full'>
-        <input type="text" placeholder='Enter your email...' 
-        name='email'
+        <input type="text" placeholder='Enter your full name...' 
+        name='fullName'
         value={form.fullName}
         onChange={updateForm}
         className='border-white border rounded-sm py-1.5 pl-2 pr-14 focus:outline-none'/>
@@ -109,19 +109,14 @@ const page = () => {
         value={form.email}
         onChange={updateForm}
         className='border-white border rounded-sm py-1.5 pl-2 pr-14 focus:outline-none'/>
-        <input type="text" placeholder='Enter your email...' 
-        name='email'
+        <input type="text" placeholder='Enter your password...' 
+        name='password'
         value={form.password}
         onChange={updateForm}
         className='border-white border rounded-sm py-1.5 pl-2 pr-14 focus:outline-none'/>
-        <input type="text" placeholder='Enter your email...' 
-        name='email'
+        <input type="text" placeholder='Confirm your password...' 
+        name='confirmPassword'
         value={form.confirmPassword}
-        onChange={updateForm}
-        className='border-white border rounded-sm py-1.5 pl-2 pr-14 focus:outline-none'/>
-        <input type="text" placeholder='Enter your email...' 
-        name='email'
-        value={form.email}
         onChange={updateForm}
         className='border-white border rounded-sm py-1.5 pl-2 pr-14 focus:outline-none'/>
         <button className='rounded-md px-1 py-1.5 cursor-pointer w-[20%] bg-white text-black' type='submit'>Continue</button>

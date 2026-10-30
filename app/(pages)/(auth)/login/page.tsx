@@ -64,7 +64,7 @@ const page = () => {
         <div>
         <input
         {...register("password", {required : true})}
-         type="text" placeholder='Enter your email...' 
+         type="text" placeholder='Enter your password...' 
                 className='border-white border rounded-sm py-1.5 pl-2 pr-14 focus:outline-none'/>
         {
           errors.password && <span>This field is required</span>
