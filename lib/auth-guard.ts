@@ -13,7 +13,7 @@ export const requireAuth = async() =>{
     const session = await getSession()
 
     if(!session){
-        redirect("/signup")
+        redirect("/register")
     }
 
     return session
