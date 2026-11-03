@@ -21,7 +21,7 @@ const page = () => {
 
   const router = useRouter()
 
-  const onSubmit: SubmitHandler<Inputs> =async (formData) => {
+  const onSubmit: SubmitHandler<Inputs> = async (formData) => {
 
     const {data, error} = await loginCredentials({email : formData.email, password : formData.password})
 

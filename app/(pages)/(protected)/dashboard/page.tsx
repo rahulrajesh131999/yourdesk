@@ -1,18 +1,54 @@
 "use client"
-import React from 'react'
+import React, { useEffect } from 'react'
 import { requireAuth } from '@/lib/auth-guard'
 import { authClient } from '@/lib/auth-client'
 import { useRouter } from 'next/navigation'
 import Loading from '@/components/common/Loading'
+import { organizationEndpoints } from '@/services/api'
 
 
 
 const page = () => {
 
+  useEffect(()=>{
+
+    const controller = new AbortController();
+
+   
+      (async()=>{
+         try {
+        const response = await fetch(organizationEndpoints.GET_ORGANIZATION_API,{
+        method : "GET",
+        signal : controller.signal
+      })
+
+      if(!response.ok) throw new Error("Failed to fetch organization")
+
+      const result = await response.json()
+
+      console.log(result)
+      } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        console.log("Request was cancelled");
+      } else {
+        console.error(error);
+      }
+    }
+
+      })()
+
+    return ()=>{
+      controller.abort()
+    }
+
+  },[])
+
     const {data: session, isPending} = authClient.useSession()
     const router = useRouter()
 
     if(isPending) return(<Loading/>)
+
+    
 
 
   return (
@@ -33,6 +69,13 @@ const page = () => {
         <h1>Create new organization</h1>
         <button onClick={()=>router.push("/create-organization")} className='border px-5 py-2 rounded-md cursor-pointer'>new organization</button>
       </div>
+      <button onClick={()=>authClient.signOut({
+        fetchOptions : {
+          onSuccess : () =>{
+            router.push("/login")
+          }
+        }
+      })}>signout</button>
     </div>
   )
 }

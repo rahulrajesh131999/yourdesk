@@ -1,6 +1,8 @@
 "use client"
 import React from 'react'
-import { useForm } from 'react-hook-form'
+import { SubmitHandler, useForm } from 'react-hook-form'
+
+import { organizationEndpoints } from '@/services/api'
 
 
 type FormValues = {
@@ -13,9 +15,35 @@ const OrganizationForm = () => {
   const {register, handleSubmit, formState:{errors}} = useForm<FormValues>()
 
 
-  const submitHandler = async(data:FormValues) =>{
+const submitHandler: SubmitHandler<FormValues> = async (data) => {
+  try {
+    const formdata = new FormData();
 
+    if (data.name) {
+      formdata.append("name", data.name);
+    }
+
+    if (data.slug) {
+      formdata.append("slug", data.slug.trim());
+    }
+
+    const response = await fetch(
+      organizationEndpoints.CREATE_ORGANIZATION_API,
+      {
+        method: "POST",
+        body: formdata,
+      }
+    );
+
+    const result = await response.json();
+
+    console.log("Status:", response.status);
+    console.log("Response:", result);
+
+  } catch (error) {
+    console.error("Request failed:", error);
   }
+};  
 
   return (
     <form onSubmit={handleSubmit(submitHandler)}>
@@ -39,7 +67,7 @@ const OrganizationForm = () => {
         />
         {errors.slug && <p role='alert'>{errors.slug.message}</p>}
       </div>
-        <button>Create organization</button>
+        <button type='submit'>Create organization</button>
     </form>
   )
 }

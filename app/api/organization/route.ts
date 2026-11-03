@@ -5,6 +5,52 @@ import { OrganizationTable, OrganizationMembersTable } from "@/db/schema";
 
 import { eq } from "drizzle-orm";
 
+
+// Get all organizations of the user
+
+export const GET = async()=>{
+  try {
+    const session = await getSession()
+
+    if(!session){
+      return NextResponse.json({
+        success : false,
+        message : "Unauthorized"
+      },{status:400})
+    }
+
+    const userId = session.user.id
+
+    const userOrganization = await db.query.OrganizationTable.findMany({where : {
+      createdBy : userId
+    },
+  with:{
+    organizationMember : true,
+    organizationTicket : true
+  }})
+
+  if(!userOrganization){
+    return NextResponse.json({
+      success : false,
+      message : "failed to fetch user organizations",
+    }, {status : 400})
+  }
+
+  return NextResponse.json({
+    success : true,
+    message : "User organizations fetched successfully",
+    data : userOrganization
+  },{status:200})
+
+  } catch (error) {
+    console.error("Failed to get user organizations....", error)
+    return NextResponse.json({
+      success:false,
+      message : "Internal Server Error"
+    },{status:500})
+  }
+}
+
 // Create organization
 
 export const POST = async (req: NextRequest) => {
