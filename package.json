@@ -10,13 +10,15 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",
+    "@reduxjs/toolkit": "^2.14.0",
     "better-auth": "^1.7.7",
     "dotenv": "^18.0.7",
     "drizzle-orm": "^1.0.0-rc.4",
     "next": "16.3.7",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "react-hook-form": "^7.91.0"
+    "react-hook-form": "^7.91.0",
+    "react-redux": "^9.3.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

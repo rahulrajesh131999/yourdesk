@@ -1,8 +1,9 @@
 "use client"
-import React from 'react'
+import React, { useEffect } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
 
 import { organizationEndpoints } from '@/services/api'
+import { useAppSelector } from '@/redux/hook'
 
 
 type FormValues = {
@@ -11,8 +12,22 @@ type FormValues = {
 }
 
 const OrganizationForm = () => {
+  
+  const {register, handleSubmit, reset, setValue, getValues, formState:{errors}} = useForm<FormValues>()
 
-  const {register, handleSubmit, formState:{errors}} = useForm<FormValues>()
+  const {editOrganization, organizationDetails } = useAppSelector((state:any)=>state.organization)
+
+  
+
+  useEffect(()=>{
+    if(editOrganization && organizationDetails){
+      const {name, slug} = organizationDetails
+      reset({
+        name,
+        slug
+      })
+    }
+  },[editOrganization, organizationDetails, reset])
 
 
 const submitHandler: SubmitHandler<FormValues> = async (data) => {
@@ -27,10 +42,13 @@ const submitHandler: SubmitHandler<FormValues> = async (data) => {
       formdata.append("slug", data.slug.trim());
     }
 
+    const endpoint = editOrganization && organizationDetails.id ? organizationEndpoints.UPDATE_ORGANIZATION_API(organizationDetails.id) : organizationEndpoints.CREATE_ORGANIZATION_API
+    const method = editOrganization && organizationDetails.id ? "PUT" : "POST"
+
     const response = await fetch(
-      organizationEndpoints.CREATE_ORGANIZATION_API,
+      endpoint,
       {
-        method: "POST",
+        method: method,
         body: formdata,
       }
     );
@@ -61,13 +79,14 @@ const submitHandler: SubmitHandler<FormValues> = async (data) => {
         <label htmlFor="slug">Organization URL / </label>
         <input id='slug'
         {...register("slug",{
-          required : "url is required"
+          required : "url is required",
+          validate : value => value.trim().length >0 || "URL cannot contain only spaces"
         })}
         
         />
         {errors.slug && <p role='alert'>{errors.slug.message}</p>}
       </div>
-        <button type='submit'>Create organization</button>
+        <button type='submit'>{editOrganization ? "Edit organization" : "Create Organization"}</button>
     </form>
   )
 }

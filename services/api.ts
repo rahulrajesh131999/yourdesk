@@ -5,5 +5,6 @@ export const organizationEndpoints = {
     CREATE_ORGANIZATION_API : BASE_URL + "/organization",
     UPDATE_ORGANIZATION_API : (id:string) => `${BASE_URL}/organization/${id}`,
     DELETE_ORGANIZATION_API : (id:string) => `${BASE_URL}/organization/${id}`,
+    GET_ORGANIZATION_BY_ID_API: (id:string) => `${BASE_URL}/organization/${id}`
     
 }

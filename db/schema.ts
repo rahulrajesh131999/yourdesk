@@ -165,7 +165,7 @@ export const TicketTable = pgTable("ticket", {
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
 
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", {withTimezone:true}).notNull().defaultNow().$onUpdate(()=>new Date()),
 },
 (table)=>[
   index("ticket_user_idx").on(table.userId),

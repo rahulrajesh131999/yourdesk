@@ -1,5 +1,5 @@
 "use client"
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { requireAuth } from '@/lib/auth-guard'
 import { authClient } from '@/lib/auth-client'
 import { useRouter } from 'next/navigation'
@@ -9,6 +9,9 @@ import { organizationEndpoints } from '@/services/api'
 
 
 const page = () => {
+
+
+  const [userOrganization, setUserOrganization] = useState<any>([])
 
   useEffect(()=>{
 
@@ -25,8 +28,11 @@ const page = () => {
       if(!response.ok) throw new Error("Failed to fetch organization")
 
       const result = await response.json()
+      if(result.success){
+        setUserOrganization(result.data)
+      }
 
-      console.log(result)
+      console.log(result.data)
       } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
         console.log("Request was cancelled");
@@ -67,7 +73,7 @@ const page = () => {
       </div>
       <div className='items-center justify-center flex flex-col gap-2'>
         <h1>Create new organization</h1>
-        <button onClick={()=>router.push("/create-organization")} className='border px-5 py-2 rounded-md cursor-pointer'>new organization</button>
+        <button onClick={()=>router.push("dashboard/organization/create-organization")} className='border px-5 py-2 rounded-md cursor-pointer'>new organization</button>
       </div>
       <button onClick={()=>authClient.signOut({
         fetchOptions : {
@@ -76,6 +82,15 @@ const page = () => {
           }
         }
       })}>signout</button>
+      <div>
+        {
+          userOrganization.map((org:any, id:any)=>(
+            <div key={id} className='px-5 py-2 my-4' onClick={()=>router.push(`/dashboard/organization/${org.organizationId}`)}>
+              <p>{org?.organization?.name}</p>
+            </div>
+          ))
+        }
+      </div>
     </div>
   )
 }

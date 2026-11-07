@@ -21,12 +21,21 @@ export const GET = async()=>{
 
     const userId = session.user.id
 
-    const userOrganization = await db.query.OrganizationTable.findMany({where : {
+    /* const userOrganization = await db.query.OrganizationTable.findMany({where : {
       createdBy : userId
     },
   with:{
     organizationMember : true,
     organizationTicket : true
+  }}) */
+
+    const userOrganization = await db.query.OrganizationMembersTable.findMany({where:{
+      userId :userId
+    },
+  with:{
+    organization : true,
+    user : true,
+    ticketAssignment : true
   }})
 
   if(!userOrganization){
@@ -150,150 +159,3 @@ export const POST = async (req: NextRequest) => {
   }
 };
 
-// Update organization
-
-export const PUT = async(req:NextRequest) =>{
-    try {
-        
-        const session = await getSession()
-
-        if (!session) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Unauthorised",
-        },
-        { status: 401 },
-      );
-    }
-
-    const userId = session.user.id
-
-    const {organizationId, name, slug } = await req.json()
-
-    if(!organizationId || !name || !slug){
-        return NextResponse.json({
-            success : false,
-            message : "Missing fields"
-        },{status:401})
-    }
-
-/*     const [organization] = await db
-                                .select()
-                                .from(OrganizationTable)
-                                .where(eq(OrganizationTable.id, organizationId))
-                                .limit(1) */
-
-    const organization = await db.query.OrganizationTable.findFirst({
-        where :  {id : organizationId}
-    })
-
-    if(!organization){
-        return NextResponse.json({
-            succcess : false,
-            message : "Organization not found"
-        }, {status:404})
-    }
-
-    if(userId != organization.createdBy){
-        return NextResponse.json({
-            success : false,
-            message : "User has no authority updating the organization"
-        },{status:401})
-    }
-
-    const updatedOrganization = await db
-                                        .update(OrganizationTable)
-                                        .set({name:name, slug:slug})
-                                        .where(eq(OrganizationTable.id, organization.id))
-                                        .returning()
-
-    if(!updatedOrganization){
-        return NextResponse.json({
-            success : false,
-            message : "Failed to update organization"
-        }, {status:401})
-    }
-
-    return NextResponse.json({
-        success : true,
-        message : "Organization updated successfully"
-    }, {status : 200})
-
-    } catch (error) {
-        console.error("Error in updating OrganizationTable", error)
-        return NextResponse.json({
-            success : false,
-            message : "Internal Server Error"
-        },{status:500})
-    }
-}
-
-// Delete organization
-
-export const DELETE = async(req:NextRequest) =>{
-    try {
-        
-         const session = await getSession()
-
-        if (!session) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Unauthorised",
-        },
-        { status: 401 },
-      );
-    }
-
-    const userId = session.user.id
-
-    const {organizationId } = await req.json()
-
-    if(!organizationId){
-        return NextResponse.json({
-            success : false,
-            message : "missing fields"
-        },{status:401})
-    }
-
-    const organization = await db.query.OrganizationTable.findFirst({
-        where :  {id : organizationId}
-    })
-
-    if(!organization){
-        return NextResponse.json({
-            succcess : false,
-            message : "Organization not found"
-        }, {status:404})
-    }
-
-    if(userId != organization.createdBy){
-        return NextResponse.json({
-            success : false,
-            message : "User has no authority updating the organization"
-        },{status:401})
-    }
-
-    const deletedOrganization = await db.delete(OrganizationTable).where(eq(OrganizationTable.id, organization.id))
-
-    if(!deletedOrganization){
-        return NextResponse.json({
-            success:false,
-            message : "Failed to delete Organization"
-        },{status:400})
-    }
-
-    return NextResponse.json({
-        success : true,
-        message : "Organization deleted successfully"
-    })
-
-    } catch (error) {
-        console.error("Error deleting OrganizationTable", error)
-        return NextResponse.json({
-            success : false,
-            message : "Internal Server Error"
-        },{status : 500})
-    }
-}

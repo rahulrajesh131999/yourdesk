@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import {store} from "@/redux/store"
+import  {ReduxProvider}  from "@/redux/ReduxProvider";
 
 
 export const metadata: Metadata = {
@@ -14,7 +16,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={` h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col  bg-[#111111] text-white">{children}</body>
+      <body className="min-h-full flex flex-col  bg-[#111111] text-white">
+        <ReduxProvider>
+        {children}
+        </ReduxProvider>
+        </body>
     </html>
   );
 }
