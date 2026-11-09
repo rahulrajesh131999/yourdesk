@@ -151,6 +151,7 @@ export const TicketTable = pgTable("ticket", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar().notNull(),
   description: text().notNull(),
+  contact : text("contact"),
   userId: text("user_id")
     .notNull()
     .references(() => UserTable.id, {
@@ -170,6 +171,18 @@ export const TicketTable = pgTable("ticket", {
 (table)=>[
   index("ticket_user_idx").on(table.userId),
 ]);
+
+export const TicketImageTable = pgTable("ticket_image", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+
+  url: varchar().notNull(),
+
+  ticketId: integer("ticket_id")
+    .notNull()
+    .references(() => TicketTable.id, {
+      onDelete: "cascade",
+    }),
+});
 
 export const TicketAssignmentTables = pgTable(
   "ticket_assignments",
@@ -203,7 +216,8 @@ export const relations = defineRelations(
     TicketTable,
     session,
     account,
-    verification
+    verification,
+    TicketImageTable
   },
   (r) => ({
     // User can create many tickets
@@ -259,6 +273,17 @@ export const relations = defineRelations(
         from: r.TicketTable.id,
         to: r.TicketAssignmentTables.ticketId,
       }),
+      images : r.many.TicketImageTable({
+        from : r.TicketTable.id,
+        to : r.TicketImageTable.ticketId
+      }) 
+    },
+
+    TicketImageTable : {
+      ticketTable : r.one.TicketTable({
+        from : r.TicketImageTable.ticketId,
+        to : r.TicketTable.id
+      })
     },
 
     OrganizationTable: {
