@@ -4,6 +4,8 @@ import { db } from "@/db/drizzle";
 import { OrganizationTable, OrganizationMembersTable } from "@/db/schema";
 
 import { eq } from "drizzle-orm";
+import cloudinary from "@/lib/cloudinary";
+import { uploadImageToCloudinary } from "@/utils/uploadImages";
 
 
 // Get all organizations of the user
@@ -80,6 +82,7 @@ export const POST = async (req: NextRequest) => {
 
     const name = formData.get("name");
     const slug = formData.get("slug");
+    const image = formData.get("image") as File ;
 
     if (
       typeof name !== "string" ||
@@ -94,6 +97,11 @@ export const POST = async (req: NextRequest) => {
         },
         { status: 400 },
       );
+    }
+
+    if(image){
+      const uploadedImage = uploadImageToCloudinary(image, "/yourdesk/organization")
+      console.log("uploadedImage", uploadedImage)
     }
 
     const existingSlug = await db

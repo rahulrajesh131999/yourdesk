@@ -111,6 +111,7 @@ export const OrganizationTable = pgTable("organization", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar().notNull(),
   slug: varchar().notNull().unique(),
+  image : text("image"),
   createdBy: text("created_by")
     .notNull()
     .references(() => UserTable.id,{

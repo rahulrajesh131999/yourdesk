@@ -23,6 +23,7 @@ const TicketForm = () => {
 
 
     const handleNewFile = (e : React.ChangeEvent<HTMLInputElement>) =>{
+        // const files = [...(e.target.files ?? [])];
         const files = Array.from(e.target.files ?? [])
         if(files.length == 0) return;
         setFiles(f => [...f, ...files])

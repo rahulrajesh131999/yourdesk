@@ -1,6 +1,7 @@
 import { db } from "@/db/drizzle";
 import { OrganizationTable } from "@/db/schema";
 import { getSession } from "@/lib/auth-guard";
+import { uploadImageToCloudinary } from "@/utils/uploadImages";
 import { eq } from "drizzle-orm";
 import { date } from "drizzle-orm/pg-core";
 import { NextRequest, NextResponse } from "next/server";
@@ -73,6 +74,7 @@ if (!Number.isInteger(organizationId) || organizationId <= 0) {
 
     const name = formdata.get("name") as string
     const slug = formdata.get("slug") as string
+    const image = formdata.get("image") as File
 
     console.log("printing name and slug", name, slug)
 
@@ -105,6 +107,11 @@ if (!Number.isInteger(organizationId) || organizationId <= 0) {
             success : false,
             message : "User has no authority updating the organization"
         },{status:401})
+    }
+
+    if(image){
+        const imageUpload = await uploadImageToCloudinary(image, "yourdesk/organization")
+        console.log(imageUpload)
     }
 
     const updatedOrganization = await db
