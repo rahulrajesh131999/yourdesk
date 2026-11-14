@@ -50,6 +50,8 @@ const TicketForm = () => {
 
             files.forEach((f)=>formdata.append("image",f))
 
+            
+
 
 
             

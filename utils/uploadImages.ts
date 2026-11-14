@@ -27,3 +27,11 @@ export const uploadImageToCloudinary = async (
     return null;
   }
 };
+
+
+export const deleteImageFromCloudinary = async (publicId:string) =>{
+  const result = await cloudinary.uploader.destroy(publicId, {
+    resource_type:"image",
+  })
+  return result
+}

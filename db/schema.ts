@@ -177,6 +177,7 @@ export const TicketImageTable = pgTable("ticket_image", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
 
   url: varchar().notNull(),
+  publicId : varchar("public_id").notNull(),
 
   ticketId: integer("ticket_id")
     .notNull()
