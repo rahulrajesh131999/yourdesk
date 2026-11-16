@@ -66,7 +66,7 @@ export const POST = async(req:NextRequest) =>{
         const userId = session.user.id
 
         const formData = await req.formData()
-        const organizationId = req.json()
+        const organizationId = formData.get("organizationId") 
 
         const organization = Number(organizationId)
 

@@ -8,6 +8,7 @@ import {
   unique,
   timestamp,
   index,
+  uuid,
 } from "drizzle-orm/pg-core";
 import { defineRelations } from "drizzle-orm";
 
@@ -148,6 +149,20 @@ export const OrganizationMembersTable = pgTable(
   ],
 );
 
+/* export const RatingTable = pgTable("rating",{
+  id : integer().primaryKey().generatedAlwaysAsIdentity(),
+  rating : integer().notNull(),
+  review : text(),
+  reviewUser : text("user_id").notNull().references(()=> UserTable.id,{
+    onDelete:"cascade"
+  }),
+  reviewOrgainzation : text("organization_id").notNull().references(()=> OrganizationTable.id,{
+    onDelete:"cascade"
+  }),
+  createdAt: timestamp().defaultNow().notNull(),
+  updatedAt: timestamp().defaultNow().notNull(),
+}) */
+
 export const TicketTable = pgTable("ticket", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar().notNull(),
@@ -195,7 +210,7 @@ export const TicketAssignmentTables = pgTable(
       .references(() => TicketTable.id,{
         onDelete : "cascade"
       }),
-    memberId: integer("member_id")
+    memberId: text("member_id")
       .notNull()
       .references(() => OrganizationMembersTable.id, {
         onDelete: "cascade",
@@ -209,6 +224,33 @@ export const TicketAssignmentTables = pgTable(
   ],
 );
 
+export const TicketFeedbackTable = pgTable("ticket_feedback",{
+  id : uuid("id").defaultRandom().primaryKey(),
+  ticketId : integer().notNull().references(()=>TicketTable.id,{
+    onDelete : "cascade"
+  }),
+  organizationId : integer().notNull().references(()=> OrganizationTable.id,{
+    onDelete : "cascade"
+  }),
+  customerId : text().notNull().references(()=>UserTable.id,{
+    onDelete : "cascade"
+  }),
+  rating: integer("rating").notNull(),
+
+    comment: text("comment"),
+
+    createdAt: timestamp("created_at")
+      .defaultNow()
+      .notNull(),
+
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .notNull(),
+},
+(table)=>[
+  unique("unique_ticket_feedback").on(table.ticketId)
+])
+
 export const relations = defineRelations(
   {
     UserTable,
@@ -219,7 +261,8 @@ export const relations = defineRelations(
     session,
     account,
     verification,
-    TicketImageTable
+    TicketImageTable,
+    TicketFeedbackTable
   },
   (r) => ({
     // User can create many tickets
@@ -245,6 +288,10 @@ export const relations = defineRelations(
       userAccount : r.many.account({
         from : r.UserTable.id,
         to : r.account.userId
+      }),
+      userFeedback : r.many.TicketFeedbackTable({
+        from :r.UserTable.id,
+        to : r.TicketFeedbackTable.customerId
       })
     },
 
@@ -278,7 +325,11 @@ export const relations = defineRelations(
       images : r.many.TicketImageTable({
         from : r.TicketTable.id,
         to : r.TicketImageTable.ticketId
-      }) 
+      }) ,
+      ticketFeedback : r.one.TicketFeedbackTable({
+        from : r.TicketTable.id,
+        to : r.TicketFeedbackTable.ticketId
+      })
     },
 
     TicketImageTable : {
@@ -301,6 +352,10 @@ export const relations = defineRelations(
         from: r.OrganizationTable.createdBy,
         to: r.UserTable.id,
       }),
+      organizationFeedback : r.many.TicketFeedbackTable({
+        from : r.OrganizationTable.id,
+        to : r.TicketFeedbackTable.organizationId
+      })
     },
 
     OrganizationMembersTable: {
@@ -316,6 +371,21 @@ export const relations = defineRelations(
         from: r.OrganizationMembersTable.id,
         to: r.TicketAssignmentTables.memberId,
       }),
+    },
+
+    TicketFeedbackTable : {
+      user : r.one.UserTable({
+        from : r.TicketFeedbackTable.customerId,
+        to : r.UserTable.id
+      }),
+      organization : r.one.OrganizationTable({
+        from : r.TicketFeedbackTable.organizationId,
+        to : r.OrganizationTable.id
+      }),
+      ticket : r.one.TicketTable({
+        from : r.TicketFeedbackTable.ticketId,
+        to : r.TicketTable.id
+      })
     },
 
     TicketAssignmentTables: {

@@ -34,7 +34,19 @@ export const GET = async (
     const userId = session.user.id;
 
     const organization = await req.json();
-    const organizationId = Number(organization);
+    const organizationId = Number(JSON.parse(organization));
+
+    console.log("printing server organizationId", organizationId)
+
+    if (!organizationId) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "organization not found",
+        },
+        { status: 404 },
+      );
+    }
 
     const ticket = await db.query.TicketTable.findFirst({
       where: {
