@@ -113,6 +113,7 @@ export const OrganizationTable = pgTable("organization", {
   name: varchar().notNull(),
   slug: varchar().notNull().unique(),
   image : text("image"),
+  image_public_id : text("image_id"),
   createdBy: text("created_by")
     .notNull()
     .references(() => UserTable.id,{
@@ -210,7 +211,7 @@ export const TicketAssignmentTables = pgTable(
       .references(() => TicketTable.id,{
         onDelete : "cascade"
       }),
-    memberId: text("member_id")
+    memberId: integer("member_id")
       .notNull()
       .references(() => OrganizationMembersTable.id, {
         onDelete: "cascade",

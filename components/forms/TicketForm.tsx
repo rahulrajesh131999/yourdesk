@@ -91,6 +91,11 @@ const TicketForm = (organizationID:{organizationID:string}) => {
 
             formdata.append("organizationId", organizationId)
 
+            if(files.length > 5){
+                console.error("image length should not be greater than 5")
+                return
+            }
+
             files.forEach((f)=>formdata.append("image",f.image))
 
 

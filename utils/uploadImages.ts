@@ -1,4 +1,4 @@
-import { v2 as cloudinary, UploadApiResponse } from "cloudinary";
+import cloudinary from "@/lib/cloudinary"
 
 export const uploadImageToCloudinary = async (
   file: File,
@@ -13,7 +13,14 @@ export const uploadImageToCloudinary = async (
       const uploadStream = cloudinary.uploader.upload_stream(
         { folder, resource_type: "auto", height, quality },
         (error, result) => {
-          if (error) reject(error);
+          if (error) {
+        reject(error);
+        return;
+    }
+    if (!result?.secure_url || !result?.public_id) {
+        reject(new Error("Cloudinary returned an invalid upload response"));
+        return;
+    }
           else resolve({
             secure_url: result?.secure_url!,
             public_id: result?.public_id!,

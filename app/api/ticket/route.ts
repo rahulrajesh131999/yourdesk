@@ -111,6 +111,7 @@ export const POST = async(req:NextRequest) =>{
                     ticketId : newTicket[0].id,
                     publicId : uploadedImage.public_id 
                 })
+                console.log("Ticket Images", ticketImages)
             }
         }
 

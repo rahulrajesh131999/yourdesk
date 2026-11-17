@@ -1,7 +1,7 @@
 import { db } from "@/db/drizzle";
 import { OrganizationTable } from "@/db/schema";
 import { getSession } from "@/lib/auth-guard";
-import { uploadImageToCloudinary } from "@/utils/uploadImages";
+import { deleteImageFromCloudinary, uploadImageToCloudinary } from "@/utils/uploadImages";
 import { eq } from "drizzle-orm";
 import { date } from "drizzle-orm/pg-core";
 import { NextRequest, NextResponse } from "next/server";
@@ -40,9 +40,12 @@ export const GET = async(req:NextRequest, context : {params:Promise<{id:string}>
 
 // Update organization
 
-export const PUT = async(req:NextRequest, context:{params : Promise<{id:string}>}) =>{
+export const PATCH = async(req:NextRequest, context:{params : Promise<{id:string}>}) =>{
+    let uploadedImagePublicId: string | undefined;
     try {
         
+        
+
         const session = await getSession()
 
         if (!session) {
@@ -72,24 +75,41 @@ if (!Number.isInteger(organizationId) || organizationId <= 0) {
 
     const formdata = await  req.formData()
 
-    const name = formdata.get("name") as string
-    const slug = formdata.get("slug") as string
-    const image = formdata.get("image") as File
+    const nameValue = formdata.get("name") as string
+    const slugValue = formdata.get("slug") as string
+    const imageValue = formdata.get("image") as File
+    const imageRemove = formdata.get("imageRemove") === "false"
 
-    console.log("printing name and slug", name, slug)
+    console.log("printing name and slug", nameValue, slugValue)
 
-    if( !name || !slug){
+    if( !nameValue || !slugValue){
         return NextResponse.json({
             success : false,
             message : "Missing fields"
         },{status:401})
     }
 
-/*     const [organization] = await db
-                                .select()
-                                .from(OrganizationTable)
-                                .where(eq(OrganizationTable.id, organizationId))
-                                .limit(1) */
+    const name = nameValue.trim()
+    const slug = slugValue.trim()
+
+    const image =
+      imageValue instanceof File && imageValue.size > 0
+        ? imageValue
+        : null;
+
+    if (imageValue !== null  && !image) {
+      return NextResponse.json(
+        { success: false, message: "Invalid image" },
+        { status: 400 }
+      );
+    }
+
+    if (image && !image.type.startsWith("image/")) {
+      return NextResponse.json(
+        { success: false, message: "Only image files are allowed" },
+        { status: 400 }
+      );
+    }
 
     const organization = await db.query.OrganizationTable.findFirst({
         where :  {id : organizationId}
@@ -106,25 +126,67 @@ if (!Number.isInteger(organizationId) || organizationId <= 0) {
         return NextResponse.json({
             success : false,
             message : "User has no authority updating the organization"
-        },{status:401})
+        },{status:403})
     }
 
+    const existingOrganization = await db.query.OrganizationTable.findFirst({
+        where : {slug : slug}
+    })
+
+if (
+    existingOrganization &&
+    existingOrganization.id !== organizationId
+) {
+    return NextResponse.json({
+        success: false,
+        message: "Slug already exists"
+    }, { status: 409 });
+}
+
+    const oldImagePublicId = organization.image
+    let newImagePublicId = oldImagePublicId
+
     if(image){
-        const imageUpload = await uploadImageToCloudinary(image, "yourdesk/organization")
-        console.log(imageUpload)
+        const imageUpload = await uploadImageToCloudinary(
+        image,
+        "yourdesk/organization"
+      );
+
+      if (!imageUpload?.public_id) {
+        return NextResponse.json(
+          { success: false, message: "Image upload failed" },
+          { status: 500 }
+        );
+      }
+      uploadedImagePublicId = imageUpload.public_id
+      newImagePublicId = imageUpload.public_id
+    }else if(imageRemove){
+        newImagePublicId = null
     }
+
+    // update database
 
     const updatedOrganization = await db
                                         .update(OrganizationTable)
-                                        .set({name:name, slug:slug })
+                                        .set({name:name, slug:slug, image:newImagePublicId})
                                         .where(eq(OrganizationTable.id, organization.id))
                                         .returning()
 
-    if(updatedOrganization.length == 0){
+    if(!updatedOrganization){
         return NextResponse.json({
             success : false,
             message : "Failed to update organization"
         }, {status:401})
+    }
+
+    // delete old image only after success database update
+
+    if(oldImagePublicId && oldImagePublicId!== newImagePublicId){
+        try {
+            await deleteImageFromCloudinary(oldImagePublicId)
+        } catch (error) {
+            console.error("Failed to delete old Cloudinary image:", error);
+        }
     }
 
     return NextResponse.json({
@@ -134,6 +196,14 @@ if (!Number.isInteger(organizationId) || organizationId <= 0) {
 
     } catch (error) {
         console.error("Error in updating OrganizationTable", error)
+        // clean up newly uploaded image if database updation failed
+        if(uploadedImagePublicId){
+            try {
+                await deleteImageFromCloudinary(uploadedImagePublicId)
+            } catch (error) {
+                console.error("Failed to delete newly uploaded Cloudinary image:", error);
+            }
+        }
         return NextResponse.json({
             success : false,
             message : "Internal Server Error"
