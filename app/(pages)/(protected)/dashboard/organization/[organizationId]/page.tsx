@@ -7,6 +7,7 @@ import {useAppDispatch, useAppSelector} from "@/redux/hook"
 import {setEditOrganization, setOrganizationDetails} from "@/slices/organizationSlice"
 import OrganizationForm from '@/components/forms/OrganizationForm'
 
+
 const page = () => {
 
     const router = useRouter()

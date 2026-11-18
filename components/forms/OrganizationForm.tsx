@@ -1,16 +1,17 @@
 "use client"
-import React, { ChangeEvent, ReactHTMLElement, useEffect, useState } from 'react'
+import React, { ChangeEvent, ReactHTMLElement, useEffect, useRef, useState } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
 
 import { organizationEndpoints } from '@/services/api'
 import { useAppSelector } from '@/redux/hook'
 import Image from 'next/image'
+import close from "@/public/close-circle-svgrepo-com.svg"
 
 
 type FormValues = {
   name : string,
   slug : string,
-  image : File
+  image : File | null
 }
 
 const OrganizationForm = () => {
@@ -20,6 +21,23 @@ const OrganizationForm = () => {
   const {editOrganization, organizationDetails } = useAppSelector((state:any)=>state.organization)
 
   const [imagePreview, setImagePreview] = useState<string | null>()
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+
+    const imageUrlRef = useRef<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+
+  // image registration
+  const {ref: registerImageRef,
+         onChange:registerImageOnChange,
+        ...imageRegister} = register("image")
+
+  const clearImagePreview = () => {
+    if (imageUrlRef.current) {
+      URL.revokeObjectURL(imageUrlRef.current)
+      imageUrlRef.current = null
+    }
+  }
 
   
 
@@ -30,21 +48,65 @@ const OrganizationForm = () => {
       reset({
         name,
         slug,
-        image
+        image : null
       })
-      setImagePreview(image)
+      setImagePreview(image || null)
+    }else{
+      reset({
+      name: "",
+      slug: "",
+      image: null
+    })
+
+    setImagePreview(null)
     }
     
   },[editOrganization, organizationDetails, reset])
 
+  useEffect(() => {
+    return () => {
+      if (imageUrlRef.current) {
+        URL.revokeObjectURL(imageUrlRef.current)
+      }
+    }
+  }, [])
+
+/*   const {
+  onChange: registerImageOnChange,
+  ...imageRegister
+} = register("image") */
+
   const imageChangeHandler = async(e:ChangeEvent<HTMLInputElement>) =>{
+
+    registerImageOnChange(e)
     const img =  e.target.files?.[0]
 
     if(!img) return
 
     const imgUrl = URL.createObjectURL(img)
+    console.log(imgUrl)
+
+    imageUrlRef.current = imgUrl
 
     setImagePreview(imgUrl)
+    /* setValue("image", img) */
+  }
+
+    // Remove image
+  const removeImageHandler = () => {
+
+    clearImagePreview()
+
+    setImagePreview(null)
+
+    setValue("image", null, {
+      shouldDirty: true,
+      shouldValidate: true
+    })
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
   }
 
 
@@ -60,12 +122,16 @@ const submitHandler: SubmitHandler<FormValues> = async (data) => {
       formdata.append("slug", data.slug.trim());
     }
 
-    if(data.image){
+    if(data.image instanceof File){
       formdata.append("image", data.image)
     }
 
-    const endpoint = editOrganization && organizationDetails.id ? organizationEndpoints.UPDATE_ORGANIZATION_API(organizationDetails.id) : organizationEndpoints.CREATE_ORGANIZATION_API
-    const method = editOrganization && organizationDetails.id ? "PUT" : "POST"
+     const isEditing = editOrganization && organizationDetails?.id
+
+    
+
+    const endpoint = isEditing ? organizationEndpoints.UPDATE_ORGANIZATION_API(organizationDetails.id) : organizationEndpoints.CREATE_ORGANIZATION_API
+    const method = isEditing ? "PUT" : "POST"
 
     const response = await fetch(
       endpoint,
@@ -85,13 +151,20 @@ const submitHandler: SubmitHandler<FormValues> = async (data) => {
   }
 };  
 
+/* const removeImageHandler = (e:React.MouseEvent<HTMLImageElement>) =>{
+  setImagePreview(null)
+  setValue("image", null)
+} */
+
+
   return (
     <form onSubmit={handleSubmit(submitHandler)}>
       <div>
         {
           imagePreview && (
-            <div>
-              <Image src={imagePreview} alt='logo' className='h-20 w-20' />
+            <div className='relative inline-block '>
+              <Image src={close} alt='close logo' width={20} height={20} className='absolute -top-2 -right-2' id='removeImage' onClick={removeImageHandler} />
+              <Image src={imagePreview} alt='logo' width={100} height={100} unoptimized />
             </div>
           )
         }
@@ -101,8 +174,13 @@ const submitHandler: SubmitHandler<FormValues> = async (data) => {
         <input 
         type="file"
         id='image'
-        {...register("image")}
-        onChange={()=>imageChangeHandler}
+        accept='image/*'
+        {...imageRegister}
+        ref={(element)=>{
+          registerImageRef(element)
+          fileInputRef.current = element
+        }}
+        // onChange={imageChangeHandler}
         />
       </div>
       <div className='flex flex-col gap-5'>
@@ -110,7 +188,10 @@ const submitHandler: SubmitHandler<FormValues> = async (data) => {
         <input 
         id='name'
         {...register("name",{
-          required : "organization name is required"
+          required : "organization name is required",
+          validate: value =>
+              value.trim().length > 0 ||
+              "Organization name cannot contain only spaces"
         })}
         />
         {errors.name && <p role='alert'>{errors.name.message}</p>}
