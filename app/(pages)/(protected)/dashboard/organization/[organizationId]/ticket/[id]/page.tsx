@@ -47,8 +47,6 @@ const page = ({params}:{params:Promise<{id:string}>}) => {
         console.error("ticket fetch error", error)
         
       }
-
-
       return ()=>{
         controller.abort()
       }

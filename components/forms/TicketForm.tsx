@@ -1,5 +1,5 @@
 "use client"
-import React, { ChangeEvent, useEffect, useState } from 'react'
+import React, { ChangeEvent, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { setEditTicket,setTicketDetails } from '@/slices/ticketSlice'
 import { ticketEndpoints } from '@/services/api'
@@ -34,11 +34,16 @@ const TicketForm = (organizationID:{organizationID:string}) => {
     const [imagePreview, setImagePreview] = useState<string[]>([])
     const {register,handleSubmit,reset, formState:{errors}} = useForm<TicketForm>()
 
+    const imageInputRef = useRef<HTMLInputElement| null>(null)
+    // const imageUrlRef = useRef<string[]>([])
+
 
 
     useEffect(()=>{
 
     },[])
+
+
 
 
     const handleNewFile = (e : React.ChangeEvent<HTMLInputElement>) =>{
@@ -166,7 +171,7 @@ const TicketForm = (organizationID:{organizationID:string}) => {
             type="text" 
             id="name"
             {...register("name",{
-                required : "Ticket name is required"
+                required : "Ticket name is required",  
             })}  />
             {
                 errors.name && <p role='alert'>{errors.name.message}</p>
@@ -192,7 +197,7 @@ const TicketForm = (organizationID:{organizationID:string}) => {
             }
         </div>
         <div>
-        <input type="file" onChange={handleNewFile} multiple  accept='image/*'disabled={files.length + existingFiles.length >= 5}/>
+        <input type="file" onChange={handleNewFile} ref={imageInputRef} multiple  accept='image/*'disabled={files.length + existingFiles.length >= 5}/>
         </div>
         <button type='submit'>submit ticket</button>
     </form>

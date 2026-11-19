@@ -42,6 +42,9 @@ const OrganizationForm = () => {
   
 
   useEffect(()=>{
+
+    clearImagePreview()
+    
     if(editOrganization && organizationDetails){
       const {name, slug, image } = organizationDetails
       
@@ -83,10 +86,13 @@ const OrganizationForm = () => {
 
     if(!img) return
 
+    clearImagePreview()
+
     const imgUrl = URL.createObjectURL(img)
     console.log(imgUrl)
 
     imageUrlRef.current = imgUrl
+    console.log("imageurl",imageUrlRef)
 
     setImagePreview(imgUrl)
     /* setValue("image", img) */
@@ -180,7 +186,7 @@ const submitHandler: SubmitHandler<FormValues> = async (data) => {
           registerImageRef(element)
           fileInputRef.current = element
         }}
-        // onChange={imageChangeHandler}
+        onChange={imageChangeHandler}
         />
       </div>
       <div className='flex flex-col gap-5'>

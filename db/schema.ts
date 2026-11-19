@@ -112,6 +112,7 @@ export const OrganizationTable = pgTable("organization", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar().notNull(),
   slug: varchar().notNull().unique(),
+  description :varchar(),
   image : text("image"),
   image_public_id : text("image_id"),
   createdBy: text("created_by")
@@ -122,6 +123,11 @@ export const OrganizationTable = pgTable("organization", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+export const OrganizationProfile = pgTable("organization_profile",{
+  id : integer().primaryKey().generatedAlwaysAsIdentity(),
+  website : text()
+})
 
 export const OrganizationMembersTable = pgTable(
   "organization_members",
