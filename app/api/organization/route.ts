@@ -82,13 +82,16 @@ export const POST = async (req: NextRequest) => {
 
     const name = formData.get("name");
     const slug = formData.get("slug");
+    const industry = formData.get("industry")
     const image = formData.get("image") as File ;
 
     if (
       typeof name !== "string" ||
       typeof slug !== "string" ||
+      typeof industry !== "string"||
       !name.trim() ||
-      !slug.trim()
+      !slug.trim() ||
+      !industry.trim()
     ) {
       return NextResponse.json(
         {
@@ -124,6 +127,7 @@ export const POST = async (req: NextRequest) => {
       .values({
         name: name,
         slug: slug,
+        industry : industry,
         createdBy: userId,
       })
       .returning();

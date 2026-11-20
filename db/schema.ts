@@ -9,6 +9,7 @@ import {
   timestamp,
   index,
   uuid,
+  time,
 } from "drizzle-orm/pg-core";
 import { defineRelations } from "drizzle-orm";
 
@@ -113,8 +114,10 @@ export const OrganizationTable = pgTable("organization", {
   name: varchar().notNull(),
   slug: varchar().notNull().unique(),
   description :varchar(),
+  industry: varchar().notNull(),
   image : text("image"),
   image_public_id : text("image_id"),
+  is_verified : boolean().default(false),
   createdBy: text("created_by")
     .notNull()
     .references(() => UserTable.id,{
@@ -126,7 +129,71 @@ export const OrganizationTable = pgTable("organization", {
 
 export const OrganizationProfile = pgTable("organization_profile",{
   id : integer().primaryKey().generatedAlwaysAsIdentity(),
-  website : text()
+  website : text(),
+  about : text(),
+  contact1:text(),
+  contact2:text(),
+  addressLine1:text(),
+  addressLine2:text(),
+  city:text().notNull(),
+  state : text().notNull(),
+  country : text().notNull(),
+  organizatonId : integer().notNull().references(()=>OrganizationTable.id,{
+    onDelete : "cascade"
+  }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+})
+
+export const organizationSupportHours = pgTable(
+  "organization_support_hours",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    organizationId: integer()
+      .notNull()
+      .references(() => OrganizationTable.id,{onDelete : "cascade"}),
+
+    dayOfWeek: integer("day_of_week").notNull(),
+    // 0 = Sunday, 1 = Monday ... 6 = Saturday
+
+    isOpen: boolean("is_open").notNull().default(true),
+
+    openingTime: time("opening_time"),
+    closingTime: time("closing_time"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    timezone: varchar("timezone", { length: 100 })
+  .notNull()
+  .default("Asia/Kolkata"),
+  },
+);
+
+export const OrganizationHelpTopics = pgTable("organization_help_topics",{
+  id : integer().primaryKey().generatedAlwaysAsIdentity(),
+  question : text().notNull(),
+  answer : text().notNull(),
+  organizatonId : integer().notNull().references(()=>OrganizationTable.id,{
+    onDelete : "cascade"
+  }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+})
+
+export const OrganizationSocialmedia = pgTable("organization_socialmedia",{
+  id : integer().primaryKey().generatedAlwaysAsIdentity(),
+  instagram : text(),
+  facebook : text(),
+  youtube : text(),
+  twitter : text(),
+  linkedin : text(),
+  organizationId: integer("organization_id")
+    .notNull()
+    .references(() => OrganizationTable.id, {
+      onDelete: "cascade",
+    }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 })
 
 export const OrganizationMembersTable = pgTable(
@@ -269,7 +336,11 @@ export const relations = defineRelations(
     account,
     verification,
     TicketImageTable,
-    TicketFeedbackTable
+    TicketFeedbackTable,
+    organizationSupportHours,
+    OrganizationProfile,
+    OrganizationSocialmedia,
+    OrganizationHelpTopics
   },
   (r) => ({
     // User can create many tickets
@@ -347,6 +418,14 @@ export const relations = defineRelations(
     },
 
     OrganizationTable: {
+      profile : r.one.OrganizationProfile({
+        from : r.OrganizationTable.id,
+        to : r.OrganizationProfile.organizatonId
+      }),
+      socialMedia : r.one.OrganizationSocialmedia({
+        from : r.OrganizationTable.id,
+        to : r.OrganizationSocialmedia.organizationId
+      }), 
       organizationMember: r.many.OrganizationMembersTable({
         from: r.OrganizationTable.id,
         to: r.OrganizationMembersTable.organizationId,
@@ -362,7 +441,16 @@ export const relations = defineRelations(
       organizationFeedback : r.many.TicketFeedbackTable({
         from : r.OrganizationTable.id,
         to : r.TicketFeedbackTable.organizationId
-      })
+      }),
+      helpTopics : r.many.OrganizationHelpTopics({
+        from : r.OrganizationTable.id,
+        to : r.OrganizationHelpTopics.organizatonId
+      }),
+      supportHours : r.many.organizationSupportHours({
+        from : r.OrganizationTable.id,
+        to : r.organizationSupportHours.organizationId
+      }),
+      
     },
 
     OrganizationMembersTable: {
@@ -378,6 +466,31 @@ export const relations = defineRelations(
         from: r.OrganizationMembersTable.id,
         to: r.TicketAssignmentTables.memberId,
       }),
+    },
+
+    OrganizationProfile : {
+      organization : r.one.OrganizationTable({
+        from : r.OrganizationProfile.organizatonId,
+        to : r.OrganizationTable.id
+      })
+    },
+    organizationSupportHours:{
+      organization : r.one.OrganizationTable({
+        from : r.organizationSupportHours.organizationId,
+        to : r.OrganizationTable.id
+      })
+    },
+    OrganizationHelpTopics : {
+      organization : r.one.OrganizationTable({
+        from : r.OrganizationHelpTopics.organizatonId,
+        to : r.OrganizationTable.id
+      })
+    },
+    OrganizationSocialmedia : {
+      organization : r.one.OrganizationTable({
+        from : r.OrganizationSocialmedia.organizationId,
+        to : r.OrganizationTable.id
+      })
     },
 
     TicketFeedbackTable : {

@@ -6,11 +6,14 @@ import { organizationEndpoints } from '@/services/api'
 import { useAppSelector } from '@/redux/hook'
 import Image from 'next/image'
 import close from "@/public/close-circle-svgrepo-com.svg"
+import { industries, type Industry } from '@/constants/industry'
 
 
 type FormValues = {
   name : string,
   slug : string,
+  industry : string,
+  tagline ?: string,
   image : File | null
 }
 
@@ -22,6 +25,7 @@ const OrganizationForm = () => {
 
   const [imagePreview, setImagePreview] = useState<string | null>()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [industry, setIndustry] = useState<string>("")
 
     const imageUrlRef = useRef<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -46,11 +50,13 @@ const OrganizationForm = () => {
     clearImagePreview()
     
     if(editOrganization && organizationDetails){
-      const {name, slug, image } = organizationDetails
+      const {name, slug, image, tagline, industry } = organizationDetails
       
       reset({
         name,
         slug,
+        tagline,
+        industry,
         image : null
       })
       setImagePreview(image || null)
@@ -58,6 +64,8 @@ const OrganizationForm = () => {
       reset({
       name: "",
       slug: "",
+      tagline : "",
+      industry : "",
       image: null
     })
 
@@ -128,8 +136,16 @@ const submitHandler: SubmitHandler<FormValues> = async (data) => {
       formdata.append("slug", data.slug.trim());
     }
 
+    if(data.tagline){
+      formdata.append("description",data.tagline)
+    }
+
     if(data.image instanceof File){
       formdata.append("image", data.image)
+    }
+
+    if(data.industry){
+      formdata.append("industry", data.industry)
     }
 
      const isEditing = editOrganization && organizationDetails?.id
@@ -212,6 +228,33 @@ const submitHandler: SubmitHandler<FormValues> = async (data) => {
         
         />
         {errors.slug && <p role='alert'>{errors.slug.message}</p>}
+      </div>
+      <div>
+        {/* <label htmlFor="industry">select industry</label> */}
+        {/* <select name="industry" id="industry" onChange={(e)=>setIndustry(e.target.value)}> */}
+        <select id="industry" {...register("industry",{
+          required : "select industry"
+        })}>
+          <option value="" disabled>
+    Select industry
+  </option>
+          {
+            industries.map((industry)=>(
+              <option key={industry} value={industry}>{industry}</option>
+            ))
+          }
+        </select>
+        {
+          errors.industry && <p role='alert'>{errors.industry.message}</p>
+        }
+      </div>
+      <div>
+        <label htmlFor="tagline">tagline</label>
+        <input id='tagline'
+        {...register("tagline")}
+        
+        />
+        {errors.tagline && <p role='alert'>{errors.tagline.message}</p>}
       </div>
         <button type='submit'>{editOrganization ? "Edit organization" : "Create Organization"}</button>
     </form>

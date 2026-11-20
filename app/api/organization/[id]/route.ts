@@ -77,12 +77,13 @@ if (!Number.isInteger(organizationId) || organizationId <= 0) {
 
     const nameValue = formdata.get("name") as string
     const slugValue = formdata.get("slug") as string
+    const industryValue = formdata.get("industry") as string
     const imageValue = formdata.get("image") as File
     const imageRemove = formdata.get("imageRemove") === "false"
 
-    console.log("printing name and slug", nameValue, slugValue)
+    console.log("printing name and slug", nameValue, slugValue, industryValue)
 
-    if( !nameValue || !slugValue){
+    if( !nameValue || !slugValue || !industryValue){
         return NextResponse.json({
             success : false,
             message : "Missing fields"
@@ -91,6 +92,7 @@ if (!Number.isInteger(organizationId) || organizationId <= 0) {
 
     const name = nameValue.trim()
     const slug = slugValue.trim()
+    const industry = industryValue.trim()
 
     const image =
       imageValue instanceof File && imageValue.size > 0
@@ -168,7 +170,7 @@ if (
 
     const updatedOrganization = await db
                                         .update(OrganizationTable)
-                                        .set({name:name, slug:slug, image:newImagePublicId})
+                                        .set({name:name, slug:slug,industry:industry, image:newImagePublicId})
                                         .where(eq(OrganizationTable.id, organization.id))
                                         .returning()
 
