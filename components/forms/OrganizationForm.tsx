@@ -13,8 +13,8 @@ type FormValues = {
   name : string,
   slug : string,
   industry : string,
-  tagline ?: string,
-  image : File | null
+  description ?: string,
+  image ?: FileList | null
 }
 
 const OrganizationForm = () => {
@@ -50,21 +50,22 @@ const OrganizationForm = () => {
     clearImagePreview()
     
     if(editOrganization && organizationDetails){
-      const {name, slug, image, tagline, industry } = organizationDetails
+      const {name, slug, image, industry, description } = organizationDetails
+      console.log("printing image",image)
       
       reset({
         name,
         slug,
-        tagline,
         industry,
-        image : null
+        description,
+        image
       })
       setImagePreview(image || null)
     }else{
       reset({
       name: "",
       slug: "",
-      tagline : "",
+      description : "",
       industry : "",
       image: null
     })
@@ -91,6 +92,8 @@ const OrganizationForm = () => {
 
     registerImageOnChange(e)
     const img =  e.target.files?.[0]
+
+    // console.log("pringing image ", img)
 
     if(!img) return
 
@@ -128,6 +131,9 @@ const submitHandler: SubmitHandler<FormValues> = async (data) => {
   try {
     const formdata = new FormData();
 
+    // console.log("printing image", data.image?.[0])
+    // const imageFile = data.image?.[0]
+
     if (data.name) {
       formdata.append("name", data.name);
     }
@@ -136,12 +142,12 @@ const submitHandler: SubmitHandler<FormValues> = async (data) => {
       formdata.append("slug", data.slug.trim());
     }
 
-    if(data.tagline){
-      formdata.append("description",data.tagline)
+    if(data.description){
+      formdata.append("description",data.description)
     }
 
-    if(data.image instanceof File){
-      formdata.append("image", data.image)
+    if(data.image){
+      formdata.append("image", data.image?.[0])
     }
 
     if(data.industry){
@@ -153,7 +159,7 @@ const submitHandler: SubmitHandler<FormValues> = async (data) => {
     
 
     const endpoint = isEditing ? organizationEndpoints.UPDATE_ORGANIZATION_API(organizationDetails.id) : organizationEndpoints.CREATE_ORGANIZATION_API
-    const method = isEditing ? "PUT" : "POST"
+    const method = isEditing ? "PATCH" : "POST"
 
     const response = await fetch(
       endpoint,
@@ -162,6 +168,8 @@ const submitHandler: SubmitHandler<FormValues> = async (data) => {
         body: formdata,
       }
     );
+
+    console.log("printing response", response)
 
     const result = await response.json();
 
@@ -251,10 +259,10 @@ const submitHandler: SubmitHandler<FormValues> = async (data) => {
       <div>
         <label htmlFor="tagline">tagline</label>
         <input id='tagline'
-        {...register("tagline")}
+        {...register("description")}
         
         />
-        {errors.tagline && <p role='alert'>{errors.tagline.message}</p>}
+        {errors.description && <p role='alert'>{errors.description.message}</p>}
       </div>
         <button type='submit'>{editOrganization ? "Edit organization" : "Create Organization"}</button>
     </form>

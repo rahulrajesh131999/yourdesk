@@ -3,12 +3,14 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit"
 
 export interface TicketState {
     ticketEdit : boolean,
-    ticketDetails : string | null
+    ticketDetails : string | null,
+    ticketImages : string | null
 }
 
 const initialState:TicketState = {
     ticketEdit : false,
-    ticketDetails : null
+    ticketDetails : null,
+    ticketImages : null
 }
 
 export const ticketSlice = createSlice({
@@ -20,6 +22,9 @@ export const ticketSlice = createSlice({
         },
         setTicketDetails : (state, action:PayloadAction<string|null>)=>{
             state.ticketDetails = action.payload
+        },
+        setTicketImages : (state, action:PayloadAction<string|null>)=>{
+            state.ticketImages = action.payload
         }
     }
 })

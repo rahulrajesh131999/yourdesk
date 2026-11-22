@@ -83,7 +83,20 @@ export const POST = async (req: NextRequest) => {
     const name = formData.get("name");
     const slug = formData.get("slug");
     const industry = formData.get("industry")
+    const description = formData.get("description") as string
     const image = formData.get("image") as File ;
+
+    if(image){
+        console.log("printing imagevalue", image)
+    }
+    if(!image){
+        console.log("Imagevalue missing")
+    }
+
+    if(description){
+      description.trim()
+    }
+
 
     if (
       typeof name !== "string" ||
@@ -102,9 +115,19 @@ export const POST = async (req: NextRequest) => {
       );
     }
 
+    let uploadedImageUrl = ""
+
     if(image){
-      const uploadedImage = uploadImageToCloudinary(image, "/yourdesk/organization")
-      console.log("uploadedImage", uploadedImage)
+      const uploadedImage = await uploadImageToCloudinary(image, "/yourdesk/organization",)
+      console.log("uploadedImage", uploadedImage?.secure_url)
+      if(uploadedImage){
+        uploadedImageUrl = uploadedImage.secure_url
+      }else {
+        return NextResponse.json({
+          success : false,
+          message: "uploadedImage failed"
+        })
+      }
     }
 
     const existingSlug = await db
@@ -128,6 +151,8 @@ export const POST = async (req: NextRequest) => {
         name: name,
         slug: slug,
         industry : industry,
+        image :uploadedImageUrl,
+        description : description, 
         createdBy: userId,
       })
       .returning();

@@ -206,7 +206,7 @@ export const PATCH = async (
       (img): img is File => img instanceof File && img.size > 0,
     );
 
-    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+    const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
 
@@ -269,17 +269,7 @@ export const PATCH = async (
       .from(TicketImageTable)
       .where(eq(TicketImageTable.ticketId, ticketId));
 
-    const remainingImages = existingImages.length - removeImageIds.length;
-
-    if (remainingImages + newImages.length > MAX_IMAGES) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Maximum 5 images allowed",
-        },
-        { status: 400 },
-      );
-    }
+    // const remainingImages = existingImages.length - removeImageIds.length;
 
     // find images that actually belong to this ticket
 
@@ -312,6 +302,18 @@ export const PATCH = async (
           { status: 400 },
         );
       }
+    }
+
+    const remainingImages = existingImages.length - previousImages.length;
+
+     if (remainingImages + newImages.length > MAX_IMAGES) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Maximum 5 images allowed",
+        },
+        { status: 400 },
+      );
     }
 
     // upload new images to cloudinary

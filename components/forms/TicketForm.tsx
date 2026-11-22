@@ -11,8 +11,8 @@ import Image from 'next/image'
 type TicketForm = {
     name : string,
     description : string,
-    contact ?: string,
-    image ?: File
+    contact ?: string | null,
+    image ?: File | null
     
 }
 
@@ -23,7 +23,7 @@ type Image = {
 
 const TicketForm = (organizationID:{organizationID:string}) => {
 
-    const {ticketEdit, ticketDetails} = useAppSelector(state=>state.ticket)
+    const {ticketEdit, ticketDetails} = useAppSelector((state:any)=>state.ticket)
 
     const organizationId = organizationID.organizationID
 
@@ -41,7 +41,24 @@ const TicketForm = (organizationID:{organizationID:string}) => {
 
     useEffect(()=>{
 
-    },[])
+        if(ticketEdit && ticketDetails){
+            const {name, description, contact, image } = ticketDetails
+
+            reset({
+                name,
+                description,
+                contact
+            })
+            setFiles([...image])
+        }else{
+            reset({
+                name : "",
+                description : "",
+                contact : null
+            })
+        }
+
+    },[ticketEdit, ticketDetails])
 
 
 
@@ -100,8 +117,16 @@ const TicketForm = (organizationID:{organizationID:string}) => {
                 console.error("image length should not be greater than 5")
                 return
             }
+            if(files && files.length > 0){
+                files.forEach((f)=>{
+                    if(f.image instanceof File){
+                        formdata.append("image",f.image)
+                    }
+                }
+            )
+            }
+            
 
-            files.forEach((f)=>formdata.append("image",f.image))
 
 
 
@@ -193,11 +218,11 @@ const TicketForm = (organizationID:{organizationID:string}) => {
             id="contact"
             {...register("contact")}  />
             {
-                errors.description && <p role='alert'>{errors.description.message}</p>
+                errors.contact && <p role='alert'>{errors.contact.message}</p>
             }
         </div>
         <div>
-        <input type="file" onChange={handleNewFile} ref={imageInputRef} multiple  accept='image/*'disabled={files.length + existingFiles.length >= 5}/>
+        <input type="file"  name="image" onChange={handleNewFile} ref={imageInputRef} multiple  accept='image/*'disabled={files.length + existingFiles.length >= 5}/>
         </div>
         <button type='submit'>submit ticket</button>
     </form>

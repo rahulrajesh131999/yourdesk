@@ -78,8 +78,16 @@ if (!Number.isInteger(organizationId) || organizationId <= 0) {
     const nameValue = formdata.get("name") as string
     const slugValue = formdata.get("slug") as string
     const industryValue = formdata.get("industry") as string
+    const descriptionValue = formdata.get("description") as string
     const imageValue = formdata.get("image") as File
     const imageRemove = formdata.get("imageRemove") === "false"
+
+    if(imageValue){
+        console.log("printing imagevalue", imageValue)
+    }
+    if(!imageValue){
+        console.log("Imagevalue missing")
+    }
 
     console.log("printing name and slug", nameValue, slugValue, industryValue)
 
@@ -93,6 +101,7 @@ if (!Number.isInteger(organizationId) || organizationId <= 0) {
     const name = nameValue.trim()
     const slug = slugValue.trim()
     const industry = industryValue.trim()
+    const description = descriptionValue.trim()
 
     const image =
       imageValue instanceof File && imageValue.size > 0
@@ -147,6 +156,7 @@ if (
 
     const oldImagePublicId = organization.image
     let newImagePublicId = oldImagePublicId
+    let newImageUrl = null
 
     if(image){
         const imageUpload = await uploadImageToCloudinary(
@@ -154,7 +164,7 @@ if (
         "yourdesk/organization"
       );
 
-      if (!imageUpload?.public_id) {
+      if (!imageUpload?.secure_url) {
         return NextResponse.json(
           { success: false, message: "Image upload failed" },
           { status: 500 }
@@ -162,6 +172,7 @@ if (
       }
       uploadedImagePublicId = imageUpload.public_id
       newImagePublicId = imageUpload.public_id
+      newImageUrl = imageUpload.secure_url
     }else if(imageRemove){
         newImagePublicId = null
     }
@@ -170,7 +181,7 @@ if (
 
     const updatedOrganization = await db
                                         .update(OrganizationTable)
-                                        .set({name:name, slug:slug,industry:industry, image:newImagePublicId})
+                                        .set({name:name, slug:slug,industry:industry, image:newImageUrl, description:description})
                                         .where(eq(OrganizationTable.id, organization.id))
                                         .returning()
 
@@ -193,7 +204,8 @@ if (
 
     return NextResponse.json({
         success : true,
-        message : "Organization updated successfully"
+        message : "Organization updated successfully",
+        data : updatedOrganization
     }, {status : 200})
 
     } catch (error) {
@@ -261,7 +273,12 @@ export const DELETE = async(req:NextRequest, context : {params:Promise<{id:strin
         },{status:401})
     }
 
+    if(organization.image_public_id){
+         await deleteImageFromCloudinary(organization.image_public_id)
+    }
+
     const deletedOrganization = await db.delete(OrganizationTable).where(eq(OrganizationTable.id, organization.id))
+
 
     if(!deletedOrganization){
         return NextResponse.json({
