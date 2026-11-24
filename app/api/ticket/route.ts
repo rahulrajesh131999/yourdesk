@@ -111,7 +111,7 @@ export const POST = async(req:NextRequest) =>{
             }, { status: 400 })
         }
 
-        const image = formData.getAll("image")
+        const image = formData.getAll("images")
 
         if(image.length > MAX_IMAGE){
             return NextResponse.json({

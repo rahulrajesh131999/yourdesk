@@ -15,7 +15,7 @@ export const organizationEndpoints = {
 export const ticketEndpoints = {
     GET_TICKET_API : BASE_URL + "/ticket",
     CREATE_NEW_TICKET : BASE_URL + "/ticket",
-    GET_TICKET_DETAILS :(id:string) => `/ticket/${id}`,
-    EDIT_TICKET :(id:string) => `/ticket/${id}`,
-    DELETE_TICKET :(id:string) => `/ticket/${id}`
+    GET_TICKET_DETAILS :(id:string) => BASE_URL + `/ticket/${id}`,
+    EDIT_TICKET :(id:string) => BASE_URL +  `/ticket/${id}`,
+    DELETE_TICKET :(id:string) => BASE_URL +  `/ticket/${id}`
 }

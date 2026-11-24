@@ -3,7 +3,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit"
 
 export interface TicketState {
     ticketEdit : boolean,
-    ticketDetails : string | null,
+    ticketDetails : any | null,
     ticketImages : string | null
 }
 
@@ -29,5 +29,5 @@ export const ticketSlice = createSlice({
     }
 })
 
-export const {setEditTicket, setTicketDetails } = ticketSlice.actions
+export const {setEditTicket, setTicketDetails, setTicketImages } = ticketSlice.actions
 export default ticketSlice.reducer

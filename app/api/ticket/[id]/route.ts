@@ -5,14 +5,12 @@ import {
   deleteImageFromCloudinary,
   uploadImageToCloudinary,
 } from "@/utils/uploadImages";
-import { string, success } from "better-auth";
 import { and, eq, inArray } from "drizzle-orm";
-import { stat } from "fs";
 import { NextRequest, NextResponse } from "next/server";
 
 // Get ticket by id
 
-export const GET = async (
+export const POST = async (
   req: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) => {
@@ -33,8 +31,8 @@ export const GET = async (
     }
     const userId = session.user.id;
 
-    const organization = await req.json();
-    const organizationId = Number(JSON.parse(organization));
+    const {organizationId} = await req.json();
+    // const organizationId = Number(JSON.parse(organization));
 
     console.log("printing server organizationId", organizationId)
 
@@ -192,6 +190,8 @@ export const PATCH = async (
 
     const images = formData.getAll("images");
 
+    console.log("printing backend images", images)
+
     if (!images.every((img) => img instanceof File)) {
       return NextResponse.json(
         {
@@ -206,9 +206,11 @@ export const PATCH = async (
       (img): img is File => img instanceof File && img.size > 0,
     );
 
+    console.log("printing new Images", newImages)
+
     const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
 
     if (
       newImages.some(
@@ -224,7 +226,7 @@ export const PATCH = async (
       );
     }
 
-    let removeImageIds: number[] = [];
+    let removeImageIds: string[] = [];
 
     if (removeImageIdsRaw != null) {
       if (typeof removeImageIdsRaw !== "string") {
@@ -243,7 +245,7 @@ export const PATCH = async (
 
         if (
           !Array.isArray(parsed) ||
-          !parsed.every((id) => Number.isSafeInteger(id) && id > 0)
+          !parsed.every((id) => typeof id === "string")
         ) {
           throw new Error("Invalid image IDs");
         }
@@ -288,7 +290,7 @@ export const PATCH = async (
         .where(
           and(
             eq(TicketImageTable.ticketId, ticketId),
-            inArray(TicketImageTable.id, removeImageIds),
+            inArray(TicketImageTable.url, removeImageIds),
           ),
         );
 
@@ -355,7 +357,7 @@ export const PATCH = async (
           .where(
             and(
               eq(TicketImageTable.ticketId, ticketId),
-              inArray(TicketImageTable.id, removeImageIds),
+              inArray(TicketImageTable.url, removeImageIds),
             ),
           );
       }
