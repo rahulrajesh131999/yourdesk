@@ -14,7 +14,13 @@ export const GET = async(req:NextRequest, context : {params:Promise<{id:string}>
 
         const organization = await db.query.OrganizationTable.findFirst({where :{
             id : organizationId
-        }})
+        },
+    with:{
+            profile : true,
+            socialMedia : true,
+            helpTopics:true,
+            supportHours : true,
+    }})
 
         if(!organization){
             return NextResponse.json({
