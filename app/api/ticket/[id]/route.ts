@@ -173,6 +173,7 @@ export const PATCH = async (
     const name = formData.get("name") as string;
     const description = formData.get("description") as string;
     const contact = formData.get("contact") as string;
+    const ticketKind = formData.get("ticketKind") as string
 
     if (!name || !description) {
       return NextResponse.json(
@@ -183,6 +184,15 @@ export const PATCH = async (
         { status: 400 },
       );
     }
+
+            const kind = ["issue","suggestion"]
+    
+            if(!kind.some((v)=> ticketKind == v)){
+                return NextResponse.json({
+                    success:false,
+                    message : "Ticketkind issue"
+                },{status : 400})
+            }
 
     const removeImageIdsRaw = formData.get("removeImageIds");
 
@@ -340,6 +350,7 @@ export const PATCH = async (
           name: name,
           description: description,
           contact: contact ?? existingTicket.contact,
+          kind : ticketKind as "issue" | "suggestion"
         })
         .where(
           and(eq(TicketTable.id, ticketId), eq(TicketTable.userId, userId)),

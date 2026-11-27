@@ -37,6 +37,11 @@ export const agentStatus = pgEnum("agentStatus", [
   "offline",
 ]);
 
+export const ticketKind = pgEnum("ticketKind",[
+  "issue",
+  "suggestion"
+])
+
 export const UserTable = pgTable("user", {
   id: text("id").primaryKey(),
   name: varchar().notNull(),
@@ -242,6 +247,7 @@ export const TicketTable = pgTable("ticket", {
   name: varchar().notNull(),
   description: text().notNull(),
   contact : text("contact"),
+  kind : ticketKind().default("issue").notNull(),
   userId: text("user_id")
     .notNull()
     .references(() => UserTable.id, {

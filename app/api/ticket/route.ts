@@ -85,12 +85,15 @@ export const POST = async(req:NextRequest) =>{
     }, { status: 400 })
 }
 
+    type ticketKind = "issue" | "suggestion"
+
 
         const organization = Number(organizationId)
 
         const name = formData.get("name") as string
         const description = formData.get("description") as string
         const contact = formData.get("contact") as string
+        const ticketKind = formData.get("ticketKind") as ticketKind
 
         if (
             typeof name !== "string" ||
@@ -109,6 +112,15 @@ export const POST = async(req:NextRequest) =>{
                 success: false,
                 message: "Invalid contact"
             }, { status: 400 })
+        }
+
+        const kind = ["issue","suggestion"]
+
+        if(!kind.some((v)=> ticketKind == v)){
+            return NextResponse.json({
+                success:false,
+                message : "Ticketkind issue"
+            },{status : 400})
         }
 
         const image = formData.getAll("images")
@@ -172,7 +184,8 @@ const uploadedImages:any[] = []
                 description,
                 userId,
                 organizationId: organization,
-                contact
+                contact,
+                kind : ticketKind 
             }).returning()
 
             if(uploadedImages.length>0){
